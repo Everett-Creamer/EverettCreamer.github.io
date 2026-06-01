@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<!--
+This is a template student's can copy to get started on their JavaScript Challenge
+-->
+<html>
+    <head>
+        <title>JS Template</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            canvas {
+                padding-left: 0;
+                padding-right: 0;
+                margin-left: auto;
+                margin-right: auto;
+                display: block;
+                width: 800px;
+            }
+
+            p {
+                text-align:center;
+                font-family:'Arial';
+                font-size: larger;
+                font-style: oblique;
+                font-weight: bold;
+            }
+            
+            
+            
+        </style>
+    </head>
+    <body>
+        <div>
+
+
+        </div>
+
+        <canvas id="canvas" width="700" height="600" style= "border:1px black" tabindex="1"></canvas>
+
+
+        <script>
+
+            //======================GLOBAL VARIABLES============================
+            //can be used in all functions
+            //this holds the state of the board
+            var board = [
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0]
+            ];
+            //this holds the state of both halfs of the active pill
+            var activePill = {
+                //the row
+                row: 0,
+                //collom
+                col: 3,
+                //and rotation of the pill
+                rotation: 0,
+                colorA: 1,
+                colorB: 2
+            };
+            //these ones are used for drawing
+            var drawer; //the thing we draw on 
+            //width and height of canvas
+            var WIDTH;
+            var HEIGHT;
+
+            var fallTimer = null;
+            //declaring needed variables
+            var score = 0;
+            var winScore = 5000;
+            var text = "GAME OVER!";
+            var images = {};
+            var gameState = "menu";
+            //loading needed images
+            function loadImages() {
+                images[1] = new Image();
+                images[2] = new Image();
+                images[3] = new Image();
+                images[4] = new Image();
+                images[5] = new Image();
+                images[6] = new Image();
+                images[1].src = "redPill_1.png";
+                images[2].src = "yellowPill_1.png";
+                images[3].src = "bluePill_1.png";
+                images[4].src = "darkRed.png";
+                images[5].src = "darkYellow.png";
+                images[6].src = "blueVirus.png";
+            }
+            //==================================================================
+
+            //======================GAME LOGIC==================================
+            //this function runs once right after the page loads (called at bottom of script)
+            //we can use it to setup starting values for our game 
+            function init() {
+                //loads in images
+                loadImages();
+                //get the canvas reference from the HTML
+                drawer = document.getElementById('canvas').getContext('2d');
+                //store the dimensions which can be used later for things like centering text
+                WIDTH = drawer.canvas.width;
+                HEIGHT = drawer.canvas.height;
+                //start the timer, for every 500 ms
+                setInterval(timer, 500);
+                //run random board, which will randomly place blocks in the board
+                randomBoard();
+                //start spawning pills
+                spawnPill();
+                //start the main drawing loop
+                requestAnimationFrame(draw);
+            }
+
+            //main game loop
+            //runs repeatedly and allows animation
+
+            function drawGame() {
+                //start with white as default
+                var color = "white";
+                //this loops through each colomn and row and draws each individual square
+                for (var i = 0; i < board.length; i++) {
+                    for (var j = 0; j < board[i].length; j++) {
+
+                        var cell = board[i][j];
+                        //this draws an empty cell
+                        if (cell === 0) {
+                            rect((j + 6) * 40, (i + 1) * 40, 35, 35, "white");
+                            //else if the cell is above the 0, its a pill and use the image it corresponds to
+                        } else if (cell > 0) {
+                            drawer.drawImage(images[cell], (j + 6) * 40, (i + 1) * 40, 35, 35);
+                            //if its under 0, multiply it by -1 to get the positive, then add 3 to find the corresponding value
+                        } else if (cell < 0) {
+                            var virusType = -cell + 3;
+                            drawer.drawImage(images[virusType], (j + 6) * 40, (i + 1) * 40, 35, 35);
+                        }
+                    }
+                }
+                //if the game is not over
+                if (gameState === "playing") {
+                    //and the rotation of the block is 0 or Horizontal
+                    if (activePill.rotation === 0) {
+                        //this draws the pills in the correct position and size horizontaly
+                        rect((activePill.col + 6) * 40, (activePill.row + 1) * 40, 35, 35, colorFrom(activePill.colorA));
+                        rect((activePill.col + 7) * 40, (activePill.row + 1) * 40, 35, 35, colorFrom(activePill.colorB));
+                        //else the block is vertical
+                    } else {
+                        //so draw it verticaly
+                        rect((activePill.col + 6) * 40, (activePill.row + 1) * 40, 35, 35, colorFrom(activePill.colorA));
+                        rect((activePill.col + 6) * 40, (activePill.row + 2) * 40, 35, 35, colorFrom(activePill.colorB));
+                    }
+                    //if the game is over, then draw game over in the middle of the screen
+                } else {
+                    drawer.font = "30px Arial";
+                    drawer.fillStyle = "black";
+                    drawer.fillRect(WIDTH / 2 - 105, HEIGHT / 2 - 50, 200, 80)
+                    drawer.fillStyle = "#6FE3CC";
+                    drawer.fillText(text, WIDTH / 2 - 80, HEIGHT / 2);
+                }
+                //sets up to draw hud
+                drawer.fillStyle = "black";
+                drawer.font = "20px Arial";
+                //draws the score in top left
+                drawer.fillText("Score: " + score, 20, 30);
+                //draws the score needed to win in top left
+                drawer.fillText("Target " + winScore, 20, 60);
+            }
+            //decides what menu to draw
+            function draw() {
+                clear();
+                if (gameState === "menu") {
+                    drawMenu();
+                } else if (gameState === "playing") {
+                    drawGame();
+                } else if (gameState === "gameover") {
+                    drawGameOver();
+                }
+                //re run this function (i.e. make it loop)
+                requestAnimationFrame(draw);
+            }
+            //draws the menu
+            function drawMenu() {
+                drawer.fillStyle = "black";
+                drawer.font = "40px Arial";
+                drawer.fillText("DR. Robotnik ", 120, 250);
+                drawer.font = "20px Arial";
+                drawer.fillText("Press SPACE to start", 280, 350);
+            }
+            //this just draws the game over menu
+            function drawGameOver() {
+                drawer.fillStyle = "black";
+                drawer.font = "40px Arial";
+                drawer.fillText(text, 300, 300);
+                drawer.font = "20px Arial";
+                drawer.fillText("Press R to restart", 300, 360);
+            }
+
+            //this gets the colour from whatever the value is in the board
+            function colorFrom(c) {
+                if (c === 1)
+                    return "red";
+                if (c === 2)
+                    return "yellow";
+                if (c === 3)
+                    return "blue";
+                return "white";
+            }
+            //this checks to see if a cell is empty, or if it has a block in it
+            function isSolid(cell) {
+                // viruses are solid negative numbers
+                if (cell < 0)
+                    return true;
+                //any blocks between 1 and 3 are solid
+                if (cell >= 1 && cell <= 3)
+                    return true;
+                //if it doesnt fall into any of these conditions, then the cell is empty
+                return false;
+            }
+            //gravity
+            function gravity() {
+                //if the game is over DO NOT RUN ANYTHING
+                if (gameState !== "playing")
+                    return;
+                //if the pills rotation is 0 or horiztonal
+                if (activePill.rotation === 0) {
+                    //create two temp variables, only seen inside this if statment
+                    let r = activePill.row;
+                    let c = activePill.col;
+                    //if whatever the colomn is + 1 is equal to the board length
+                    if (r + 1 >= board.length || isSolid(board[r + 1][c]) || isSolid(board[r + 1][c + 1])) {
+                        lockPill();
+                        return;
+                    }
+                    activePill.row++;
+                } else {
+                    let r = activePill.row;
+                    let c = activePill.col;
+                    // vertical pill check BOTH halves
+                    if (
+                            r + 2 >= board.length ||
+                            isSolid(board[r + 1][c]) ||
+                            isSolid(board[r + 2][c])
+                            ) {
+                        lockPill();
+                        return;
+                    }
+                    activePill.row++;
+                }
+            }
+
+            function lockPill() {
+                //if the game is over then do nothing
+                if (gameState !== "playing")
+                    return;
+                //if the active pill is horizontal
+                if (activePill.rotation === 0) {
+                    //the current position of the board, + 1 to the side gets set to its corresponding colour
+                    board[activePill.row][activePill.col] = activePill.colorA;
+                    board[activePill.row][activePill.col + 1] = activePill.colorB;
+                    //the current position of the board, + 1 down set to its corresponding colour
+                } else {
+                    board[activePill.row][activePill.col] = activePill.colorA;
+                    board[activePill.row + 1][activePill.col] = activePill.colorB;
+                }
+                //clear matches and let pills fall
+                clearMatchesAndDrop();
+                //this spawns pills
+                spawnPill();
+                //if there is a block in the starting postions
+                if (board[0][3] !== 0 || board[0][4] !== 0) {
+                    //GAME OVER
+                    gameState = "gameover";
+                }
+            }
+
+            function clearMatchesAndDrop() {
+                //declaring needed variables
+                var anythingCleared = true;
+                var maxLoops = 20;
+                var loopCount = 0;
+                //while something is cleared and the loop count is under the max amount of loops
+                while (anythingCleared && loopCount < maxLoops) {
+                    //nothing has been cleared
+                    anythingCleared = false;
+                    //add one to the loop count
+                    loopCount++;
+                    //a clone of the board, which will remember what pieces need to be cleared
+                    var marks = Array.from({length: board.length}, () => Array(board[0].length).fill(false));
+                    //loop through the board
+                    for (var i = 0; i < board.length; i++) {
+                        //counter for tje amount of blocks in a row
+                        var count = 1;
+                        for (var j = 1; j < board[i].length; j++) {
+
+                            //this gets the current pill and previous pill and stores it
+                            var curr = getPureColor(board[i][j]);
+                            var prev = getPureColor(board[i][j - 1]);
+                            //if the current one is not 0 and is the same as the last one
+                            if (curr !== 0 && curr === prev) {
+                                //add one to the count
+                                count++;
+                            } else {
+                                //if the count is 4 or more, then
+                                if (count >= 4) {
+                                    //loop through the amount of identical blocks
+                                    for (var k = 0; k < count; k++) {
+                                        //marks the cell to be cleared
+                                        marks[i][j - 1 - k] = true;
+                                    }
+                                    anythingCleared = true;
+                                }
+                                count = 1;
+                            }
+                        }
+                        //if the count is 4 or more
+                        if (count >= 4) {
+                            //loop through
+                            for (var k = 0; k < count; k++) {
+                                //starts at the last cell of the row, and makrs cells needing to be removed
+                                marks[i][board[i].length - 1 - k] = true;
+                            }
+                            anythingCleared = true;
+                        }
+                    }
+
+                    // vertical clears
+                    //loops through the board
+                    for (var j = 0; j < board[0].length; j++) {
+                        var count = 1;
+                        for (var i = 1; i < board.length; i++) {
+                            //gets the current and previous board colour
+                            var curr = getPureColor(board[i][j]);
+                            var prev = getPureColor(board[i - 1][j]);
+                            //if its not 0 and they are the same
+                            if (curr !== 0 && curr === prev) {
+                                //add to the count
+                                count++;
+                            } else {
+                                //check to see if there are 4 or more matched in a row
+                                if (count >= 4) {
+                                    //loop through
+                                    for (var k = 0; k < count; k++) {
+                                        //marks the cell to be cleared
+                                        marks[i - 1 - k][j] = true;
+                                    }
+                                    anythingCleared = true;
+                                }
+                                count = 1;
+                            }
+                        }
+                        //if the count is above or equal to 4
+                        if (count >= 4) {
+                            //loop through
+                            for (var k = 0; k < count; k++) {
+                                //marks the cells as needing to be cleared
+                                marks[board.length - 1 - k][j] = true;
+                            }
+                            anythingCleared = true;
+                        }
+                    }
+
+                    //loops through the entire board
+                    for (var i = 0; i < board.length; i++) {
+                        for (var j = 0; j < board[0].length; j++) {
+                            //if there is a mark, then set it to 0
+                            if (marks[i][j]) {
+                                addPoints(marks[i][j])
+                                board[i][j] = 0;
+                            }
+                        }
+                    }
+                    win();
+                    //if no blocks were cleared, dont coninue
+                    if (!anythingCleared) {
+                        break;
+                    }
+
+                    // drop floating pills locked pills fall, but negative pills stay
+                    //loops through the entire board
+                    for (var i = board.length - 2; i >= 0; i--) {
+                        for (var j = 0; j < board[0].length; j++) {
+                            //temp variable
+                            var cell = board[i][j];
+                            //if its not empty
+                            if (cell >= 1 && cell <= 3) {
+                                //check below
+                                var below = i + 1;
+                                //if its below, then 
+                                while (below < board.length && board[below][j] === 0) {
+                                    //just brings the piece down one, and empties its last location
+                                    board[below][j] = board[below - 1][j];
+                                    board[below - 1][j] = 0;
+                                    below++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            function timer() {
+                //this applies the gravity function every tic determined in constructor unless the game is over
+                if (gameState === "playing") {
+                    gravity();
+                }
+            }
+            //this gets the actaul colour of the cell, allowing easy determination for clear
+            function getPureColor(cell) {
+                //if the cell is 0, its empty
+                if (cell === 0)
+                    return 0;
+                //if its less then 0, then return the - of it.
+                else if (cell < 0)
+                    return -cell;
+                //else return its value
+                return cell;
+            }
+            //this creates the random board
+            function randomBoard() {
+                //loops through the entire board
+                for (var i = 5; i < board.length; i++) {
+                    for (var j = 0; j < board[i].length; j++) {
+                        //gets a 40% to place a random virus
+                        if (Math.random() < 0.4) {
+                            //the colour is a random int between 1 and 3
+                            var color = Math.floor(Math.random() * 3) + 1;
+                            //and is a negative number
+                            board[i][j] = -color;
+                        } else {
+                            //else it is empty
+                            board[i][j] = 0;
+                        }
+                    }
+                }
+            }
+
+            //spawning pills
+            function spawnPill() {
+                //checks to see if there is blocs in the starting locations
+                if (board[0][3] !== 0 || board[0][4] !== 0) {
+                    //if there is then the game is over
+                    gameState = "gameover";
+                    text = "GAME OVER!";
+                    return;
+                }
+                //this creates the pill at the specific location at the top
+                activePill.row = 0;
+                activePill.col = 3;
+                activePill.rotation = 0;
+                activePill.colorA = Math.floor(Math.random() * 3) + 1;
+                activePill.colorB = Math.floor(Math.random() * 3) + 1;
+            }
+            //rotating pill
+            function rotatePill() {
+                //if the game is over, then do nothing
+                if (gameState !== "playing")
+                    return;
+                //if its not playing then return
+                if (gameState !== "playing")
+                    return;
+                //if the pill is rotation is 0, it is horizontal - vertical
+                if (activePill.rotation === 0) {
+                    //check to see if the spaces around it is empty and if it can roatate
+                    if (activePill.row + 1 < board.length && board[activePill.row + 1][activePill.col] === 0 && board[activePill.row][activePill.col] === 0) {
+                        //set the rotation to 1
+                        activePill.rotation = 1;
+                    }
+                } else {
+                    //then it must be 1, or vertcial to horizontal
+                    //checks to see if it can rotate
+                    if (activePill.col + 1 < board[0].length && board[activePill.row][activePill.col + 1] === 0 && board[activePill.row][activePill.col] === 0) {
+                        //set the rotate to 0
+                        activePill.rotation = 0;
+                    }
+                }
+            }
+
+            function moveLeft() {
+                //checks to see if the game is over
+                if (gameState !== "playing") {
+                    return;
+                }
+                //if its not playing then return
+                if (gameState !== "playing")
+                    return;
+                //if the rotation is 0 or horizontal
+                if (activePill.rotation === 0) {
+                    //check to see if the square beside it is empty
+                    if (board[activePill.row][activePill.col - 1] === 0) {
+                        //if it is then move it to the left
+                        activePill.col--;
+                    }
+                    //else its vertical
+                } else {
+                    //check to see if both segments have a clear spot beside it
+                    if (activePill.row + 1 < board.length && board[activePill.row][activePill.col - 1] === 0 && board[activePill.row + 1][activePill.col - 1] === 0) {
+                        //if so move it over
+                        activePill.col--;
+                    }
+                }
+            }
+
+            function moveRight() {
+                //checks to see if the game is over
+                if (gameState !== "playing")
+                    return;
+                //if its not playing then return
+                if (gameState !== "playing")
+                    return;
+                //if the rotation is 0 or horizontal
+                if (activePill.rotation === 0) {
+                    //check to see if the square beside it is empty
+                    if (activePill.col + 2 < board[0].length && board[activePill.row][activePill.col + 2] === 0) {
+                        //if it is then move it to the right
+                        activePill.col++;
+                    }
+                    //else its vertical
+                } else {
+                    //check to see if both segments have a clear spot beside it
+                    if (activePill.col + 1 < board[0].length && board[activePill.row][activePill.col + 1] === 0 && board[activePill.row + 1][activePill.col + 1] === 0) {
+                        //if so move it over        
+                        activePill.col++;
+                    }
+                }
+            }
+
+            function addPoints(cell) {
+                //checks to see if it is a virus
+                if (cell < 0) {
+                    score += 100;
+                } else {
+                    score += 50;
+                }
+            }
+
+            function win() {
+                //if the score is above the score needed to win
+                if (score >= winScore) {
+                    //then game over is true
+                    gameState = "gameover";
+                    //and paste YOU WON instead of GAME OVER
+                    text = "YOU WON";
+                }
+            }
+            //this just restarts the game
+            function restartGame() {
+                board = board.map(row => row.map(() => 0));
+                score = 0;
+                gameState = "menu";
+                text = "GAME OVER!";
+                randomBoard();
+            }
+
+            //==========================DRAWING HELPERS=========================
+
+            //this function draws a rectangle with the top left corner at x,y
+            //and a width of w and a height of h 
+            function rect(x, y, w, h, colour) {
+                drawer.beginPath();
+                drawer.rect(x, y, w, h);
+                drawer.closePath();
+                drawer.fillStyle = colour;
+                drawer.fill();
+            }
+            //fills the screen with gray (i.e. erases everything)
+            function clear() {
+                drawer.fillStyle = "#b6e7e7"; //gray
+                rect(0, 0, WIDTH, HEIGHT, "#b6e7e7");
+            }
+            //==================================================================
+
+
+            //===========================USER INPUT=============================
+            //this function runs when a key is pressed down
+            function onKeyDown(evt) {
+                //check which key is pressed
+                //up arrow - rotate
+                if (evt.keyCode === 38) {
+                    //run rotate function
+                    rotatePill();
+                    //stop it from running if the user holds it
+                    evt.preventDefault();
+                }
+                //left arrow
+                if (evt.keyCode === 37) {
+                    //runs move left
+                    moveLeft();
+                    console.log(score);
+                }
+                //right arrow
+                if (evt.keyCode === 39) {
+                    //runs move right
+                    moveRight();
+                }
+                //if the state is the menu and the user hits space, change game state
+                if (gameState === "menu" && evt.keyCode === 32) { // SPACE
+                    gameState = "playing";
+                    return;
+                } else if (gameState === "gameover" && evt.keyCode === 82) { // R
+                    restartGame();
+                    return;
+                }
+            }
+
+            //===========================SETUP CODE=============================
+            //give the canvas focus so that key presses register
+            document.getElementById('canvas').focus();
+            //call the init function when the page loads, it will then start the main game loop
+            window.addEventListener("load", init, false);
+            //call the key press functions when keys are pressed
+            window.addEventListener("keydown", onKeyDown, false);
+            //==================================================================
+        </script>
+    </body>
