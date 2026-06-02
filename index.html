@@ -8,6 +8,7 @@ This is a template student's can copy to get started on their JavaScript Challen
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
+
             canvas {
                 padding-left: 0;
                 padding-right: 0;
@@ -16,7 +17,6 @@ This is a template student's can copy to get started on their JavaScript Challen
                 display: block;
                 width: 800px;
             }
-
             p {
                 text-align:center;
                 font-family:'Arial';
@@ -24,7 +24,12 @@ This is a template student's can copy to get started on their JavaScript Challen
                 font-style: oblique;
                 font-weight: bold;
             }
-
+            button {
+                display: block;
+                margin: 10px auto;
+                padding: 10px 20px;
+                font-size: 16px;
+            }
         </style>
     </head>
     <body>
@@ -32,7 +37,7 @@ This is a template student's can copy to get started on their JavaScript Challen
 
 
         </div>
-
+        <button id="helpButton">How to Play</button>
         <canvas id="canvas" width="700" height="725" style= "border:1px black" tabindex="1"></canvas>
 
 
@@ -79,14 +84,16 @@ This is a template student's can copy to get started on their JavaScript Challen
             var fallTimer = null;
             //declaring needed variables
             var score = 0;
-            var winScore = 5000;
+            var winScore = 000;
             var text = "GAME OVER!";
             var images = {};
             var gameState = "menu";
 
             let backgroundSound = new Audio("background.mp3");
             backgroundSound.volume = 0.1;
-
+            
+            
+            
             //loading needed images
             function loadImages() {
                 images[1] = new Image();
@@ -97,6 +104,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 images[6] = new Image();
                 images[7] = new Image();
                 images[8] = new Image();
+                images[9] = new Image();
                 images[1].src = "redPill_1.png";
                 images[2].src = "yellowPill_1.png";
                 images[3].src = "bluePill_1.png";
@@ -107,6 +115,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 //images for menus
                 images[7].src = "titleImg.png";
                 images[8].src = "inGame.png";
+                images[9].src = "win.png";
             }
             //==================================================================
 
@@ -127,6 +136,8 @@ This is a template student's can copy to get started on their JavaScript Challen
                 randomBoard();
                 //start spawning pills
                 spawnPill();
+                //gets the help button state
+                let helpButton = document.getElementById("helpButton");
                 //start the main drawing loop
                 requestAnimationFrame(draw);
             }
@@ -197,8 +208,11 @@ This is a template student's can copy to get started on their JavaScript Challen
                     backgroundSound.play();
                     drawer.drawImage(images[8], 20, HEIGHT - 300, 200, 200);
                 } else if (gameState === "gameover") {
+                    if (text === "YOU WON"){
+                        drawer.drawImage(images[9], 300, 100, 400, 600);
+                    }
                     drawGameOver();
-                } else if (gameState === "howToPlay"){
+                } else if (gameState === "howToPlay") {
                     howToPlay();
                 }
                 //re run this function (i.e. make it loop)
@@ -218,18 +232,16 @@ This is a template student's can copy to get started on their JavaScript Challen
             function drawGameOver() {
                 drawer.fillStyle = "black";
                 drawer.font = "40px Arial";
-                drawer.fillText(text, 200, 300);
+                drawer.fillText(text, 100, 300);
                 drawer.font = "20px Arial";
-                drawer.fillText("Press R to restart", 200, 340);
+                drawer.fillText("Press R to restart", 100, 340);
             }
 
-            function howToPlay(){
+            function howToPlay() {
                 drawer.fillStyle = "black";
-                drawer.font = "40px Arial";
-                drawer.fillText("You job is to line up 4 colours in a row, horizontal or vertical", 200, 300);
-                drawer.fillText("Use the arrow keys to move left and right, and up arrow to rotate", 200, 350);
                 drawer.font = "20px Arial";
-                drawer.fillText("Press R to restart", 200, 340);
+                drawer.fillText("You job is to line up 4 colours in a row, horizontal or vertical", 100, 300);
+                drawer.fillText("Use the arrow keys to move left and right, and up arrow to rotate", 100, 350);
             }
 
 
@@ -634,15 +646,23 @@ This is a template student's can copy to get started on their JavaScript Challen
                 //if the state is the menu and the user hits space, change game state
                 if (gameState === "menu" && evt.keyCode === 32) { // SPACE
                     gameState = "playing";
+                    helpButton.style.display = "none";
                 } else if (gameState === "gameover" && evt.keyCode === 82) { // R
                     restartGame();
+                    helpButton.style.display = "block";
                 }
-                
-                //this is to get to and from the help menu
-                if(gameState === "menu" && evt.keyCode === 104){
-                    gameState = "howToPlay";
-                }
+
             }
+
+            document.getElementById("helpButton").addEventListener("click", function () {
+                if (gameState === "menu") {
+                    gameState = "howToPlay";
+                    this.innerText = "Back to Menu";
+                } else {
+                    gameState = "menu";
+                    this.innerText = "How to Play";
+                }
+            });
 
             //===========================SETUP CODE=============================
             //give the canvas focus so that key presses register
