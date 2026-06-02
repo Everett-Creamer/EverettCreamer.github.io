@@ -24,9 +24,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 font-style: oblique;
                 font-weight: bold;
             }
-            
-            
-            
+
         </style>
     </head>
     <body>
@@ -35,7 +33,7 @@ This is a template student's can copy to get started on their JavaScript Challen
 
         </div>
 
-        <canvas id="canvas" width="700" height="600" style= "border:1px black" tabindex="1"></canvas>
+        <canvas id="canvas" width="700" height="725" style= "border:1px black" tabindex="1"></canvas>
 
 
         <script>
@@ -85,6 +83,10 @@ This is a template student's can copy to get started on their JavaScript Challen
             var text = "GAME OVER!";
             var images = {};
             var gameState = "menu";
+
+            let backgroundSound = new Audio("background.mp3");
+            backgroundSound.volume = 0.1;
+
             //loading needed images
             function loadImages() {
                 images[1] = new Image();
@@ -93,12 +95,18 @@ This is a template student's can copy to get started on their JavaScript Challen
                 images[4] = new Image();
                 images[5] = new Image();
                 images[6] = new Image();
+                images[7] = new Image();
+                images[8] = new Image();
                 images[1].src = "redPill_1.png";
                 images[2].src = "yellowPill_1.png";
                 images[3].src = "bluePill_1.png";
                 images[4].src = "darkRed.png";
                 images[5].src = "darkYellow.png";
                 images[6].src = "blueVirus.png";
+
+                //images for menus
+                images[7].src = "titleImg.png";
+                images[8].src = "inGame.png";
             }
             //==================================================================
 
@@ -125,7 +133,6 @@ This is a template student's can copy to get started on their JavaScript Challen
 
             //main game loop
             //runs repeatedly and allows animation
-
             function drawGame() {
                 //start with white as default
                 var color = "white";
@@ -164,7 +171,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 } else {
                     drawer.font = "30px Arial";
                     drawer.fillStyle = "black";
-                    drawer.fillRect(WIDTH / 2 - 105, HEIGHT / 2 - 50, 200, 80)
+                    drawer.fillRect(WIDTH / 2 - 105, HEIGHT / 2 - 50, 200, 80);
                     drawer.fillStyle = "#6FE3CC";
                     drawer.fillText(text, WIDTH / 2 - 80, HEIGHT / 2);
                 }
@@ -174,8 +181,11 @@ This is a template student's can copy to get started on their JavaScript Challen
                 //draws the score in top left
                 drawer.fillText("Score: " + score, 20, 30);
                 //draws the score needed to win in top left
-                drawer.fillText("Target " + winScore, 20, 60);
+                drawer.fillText("Target: " + winScore, 20, 60);
             }
+
+
+
             //decides what menu to draw
             function draw() {
                 clear();
@@ -183,28 +193,46 @@ This is a template student's can copy to get started on their JavaScript Challen
                     drawMenu();
                 } else if (gameState === "playing") {
                     drawGame();
+                    //play music
+                    backgroundSound.play();
+                    drawer.drawImage(images[8], 20, HEIGHT - 300, 200, 200);
                 } else if (gameState === "gameover") {
                     drawGameOver();
+                } else if (gameState === "howToPlay"){
+                    howToPlay();
                 }
                 //re run this function (i.e. make it loop)
                 requestAnimationFrame(draw);
             }
             //draws the menu
             function drawMenu() {
+                drawer.drawImage(images[7], WIDTH / 2 - 150, HEIGHT / 2, 300, 300);
                 drawer.fillStyle = "black";
                 drawer.font = "40px Arial";
-                drawer.fillText("DR. Robotnik ", 120, 250);
+                drawer.fillText("DR. Robotnik ", 200, 250);
                 drawer.font = "20px Arial";
-                drawer.fillText("Press SPACE to start", 280, 350);
+                drawer.fillText("Press SPACE to start", 200, 300);
+
             }
             //this just draws the game over menu
             function drawGameOver() {
                 drawer.fillStyle = "black";
                 drawer.font = "40px Arial";
-                drawer.fillText(text, 300, 300);
+                drawer.fillText(text, 200, 300);
                 drawer.font = "20px Arial";
-                drawer.fillText("Press R to restart", 300, 360);
+                drawer.fillText("Press R to restart", 200, 340);
             }
+
+            function howToPlay(){
+                drawer.fillStyle = "black";
+                drawer.font = "40px Arial";
+                drawer.fillText("You job is to line up 4 colours in a row, horizontal or vertical", 200, 300);
+                drawer.fillText("Use the arrow keys to move left and right, and up arrow to rotate", 200, 350);
+                drawer.font = "20px Arial";
+                drawer.fillText("Press R to restart", 200, 340);
+            }
+
+
 
             //this gets the colour from whatever the value is in the board
             function colorFrom(c) {
@@ -375,7 +403,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                         for (var j = 0; j < board[0].length; j++) {
                             //if there is a mark, then set it to 0
                             if (marks[i][j]) {
-                                addPoints(marks[i][j])
+                                addPoints(board[i][j]);
                                 board[i][j] = 0;
                             }
                         }
@@ -606,10 +634,13 @@ This is a template student's can copy to get started on their JavaScript Challen
                 //if the state is the menu and the user hits space, change game state
                 if (gameState === "menu" && evt.keyCode === 32) { // SPACE
                     gameState = "playing";
-                    return;
                 } else if (gameState === "gameover" && evt.keyCode === 82) { // R
                     restartGame();
-                    return;
+                }
+                
+                //this is to get to and from the help menu
+                if(gameState === "menu" && evt.keyCode === 104){
+                    gameState = "howToPlay";
                 }
             }
 
