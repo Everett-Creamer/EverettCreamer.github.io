@@ -168,7 +168,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 //if the game is not over
                 if (gameState === "playing") {
                     //and the rotation of the block is 0 or Horizontal
-                    if (activePill.rotation === 0) {
+                    if (activePill.rotation % 2 === 0) {
                         //this draws the pills in the correct position and size horizontaly
                         rect((activePill.col + 6) * 40, (activePill.row + 1) * 40, 35, 35, colorFrom(activePill.colorA));
                         rect((activePill.col + 7) * 40, (activePill.row + 1) * 40, 35, 35, colorFrom(activePill.colorB));
@@ -273,7 +273,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 if (gameState !== "playing")
                     return;
                 //if the pills rotation is 0 or horiztonal
-                if (activePill.rotation === 0) {
+                if (activePill.rotation % 2 === 0) {
                     //create two temp variables, only seen inside this if statment
                     let r = activePill.row;
                     let c = activePill.col;
@@ -304,7 +304,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 if (gameState !== "playing")
                     return;
                 //if the active pill is horizontal
-                if (activePill.rotation === 0) {
+                if (activePill.rotation % 2 === 0) {
                     //the current position of the board, + 1 to the side gets set to its corresponding colour
                     board[activePill.row][activePill.col] = activePill.colorA;
                     board[activePill.row][activePill.col + 1] = activePill.colorB;
@@ -510,19 +510,25 @@ This is a template student's can copy to get started on their JavaScript Challen
                 if (gameState !== "playing")
                     return;
                 //if the pill is rotation is 0, it is horizontal - vertical
-                if (activePill.rotation === 0) {
+                if (activePill.rotation % 2 === 0) {
                     //check to see if the spaces around it is empty and if it can roatate
                     if (activePill.row + 1 < board.length && board[activePill.row + 1][activePill.col] === 0 && board[activePill.row][activePill.col] === 0) {
                         //set the rotation to 1
-                        activePill.rotation = 1;
+                        activePill.rotation = (activePill.rotation + 1) % 4;
                     }
                 } else {
                     //then it must be 1, or vertcial to horizontal
                     //checks to see if it can rotate
                     if (activePill.col + 1 < board[0].length && board[activePill.row][activePill.col + 1] === 0 && board[activePill.row][activePill.col] === 0) {
                         //set the rotate to 0
-                        activePill.rotation = 0;
+                        activePill.rotation = (activePill.rotation + 1) % 4;
                     }
+                }
+                if(activePill.rotation == 0 || activePill.rotation == 2)
+                {
+                    temp = activePill.colorA;
+                    activePill.colorA = activePill.colorB;
+                    activePill.colorB = temp;
                 }
             }
 
@@ -535,7 +541,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 if (gameState !== "playing")
                     return;
                 //if the rotation is 0 or horizontal
-                if (activePill.rotation === 0) {
+                if (activePill.rotation % 2 === 0) {
                     //check to see if the square beside it is empty
                     if (board[activePill.row][activePill.col - 1] === 0) {
                         //if it is then move it to the left
@@ -559,7 +565,7 @@ This is a template student's can copy to get started on their JavaScript Challen
                 if (gameState !== "playing")
                     return;
                 //if the rotation is 0 or horizontal
-                if (activePill.rotation === 0) {
+                if (activePill.rotation % 2 === 0) {
                     //check to see if the square beside it is empty
                     if (activePill.col + 2 < board[0].length && board[activePill.row][activePill.col + 2] === 0) {
                         //if it is then move it to the right
